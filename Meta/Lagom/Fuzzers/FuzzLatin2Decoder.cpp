@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, Andreas Kling <kling@serenityos.org>
+ * Copyright (c) 2021, the SerenityOS developers.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,17 +24,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <LibWeb/CSS/StyleDeclaration.h>
+#include <AK/String.h>
+#include <LibTextCodec/Decoder.h>
+#include <stddef.h>
+#include <stdint.h>
 
-namespace Web::CSS {
-
-StyleDeclaration::StyleDeclaration(Vector<StyleProperty>&& properties)
-    : m_properties(move(properties))
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-}
-
-StyleDeclaration::~StyleDeclaration()
-{
-}
-
+    auto* decoder = TextCodec::decoder_for("iso-8859-2");
+    VERIFY(decoder);
+    decoder->to_utf8({ data, size });
+    return 0;
 }

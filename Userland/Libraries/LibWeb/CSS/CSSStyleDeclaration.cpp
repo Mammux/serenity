@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Matthew Olsson <matthewcolsson@gmail.com>
+ * Copyright (c) 2018-2020, Andreas Kling <kling@serenityos.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,45 +24,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include <LibWeb/CSS/CSSStyleDeclaration.h>
 
-#include <LibJS/AST.h>
-#include <LibJS/Runtime/Object.h>
-#include <LibRegex/Regex.h>
+namespace Web::CSS {
 
-struct Flags {
-    regex::RegexOptions<ECMAScriptFlags> effective_flags;
-    regex::RegexOptions<ECMAScriptFlags> declared_flags;
-};
+CSSStyleDeclaration::CSSStyleDeclaration(Vector<StyleProperty>&& properties)
+    : m_properties(move(properties))
+{
+}
 
-namespace JS {
+CSSStyleDeclaration::~CSSStyleDeclaration()
+{
+}
 
-RegExpObject* regexp_create(GlobalObject&, Value pattern, Value flags);
-
-class RegExpObject : public Object {
-    JS_OBJECT(RegExpObject, Object);
-
-public:
-    static RegExpObject* create(GlobalObject&, String pattern, String flags);
-
-    RegExpObject(String pattern, String flags, Object& prototype);
-    virtual void initialize(GlobalObject&) override;
-    virtual ~RegExpObject() override;
-
-    const String& pattern() const { return m_pattern; }
-    const String& flags() const { return m_flags; }
-    const regex::RegexOptions<ECMAScriptFlags>& declared_options() { return m_active_flags.declared_flags; }
-    const Regex<ECMA262>& regex() { return m_regex; }
-    const Regex<ECMA262>& regex() const { return m_regex; }
-
-private:
-    JS_DECLARE_NATIVE_GETTER(last_index);
-    JS_DECLARE_NATIVE_SETTER(set_last_index);
-
-    String m_pattern;
-    String m_flags;
-    Flags m_active_flags;
-    Regex<ECMA262> m_regex;
-};
+String CSSStyleDeclaration::item(size_t index) const
+{
+    if (index >= m_properties.size())
+        return {};
+    return CSS::string_from_property_id(m_properties[index].property_id);
+}
 
 }

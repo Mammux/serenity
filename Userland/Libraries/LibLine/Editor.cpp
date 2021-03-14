@@ -159,6 +159,8 @@ void Editor::set_default_keybinds()
     register_key_input_callback(ctrl('F'), EDITOR_INTERNAL_FUNCTION(cursor_right_character));
     // ^H: ctrl('H') == '\b'
     register_key_input_callback(ctrl('H'), EDITOR_INTERNAL_FUNCTION(erase_character_backwards));
+    // DEL - Some terminals send this instead of ^H.
+    register_key_input_callback((char)127, EDITOR_INTERNAL_FUNCTION(erase_character_backwards));
     register_key_input_callback(m_termios.c_cc[VERASE], EDITOR_INTERNAL_FUNCTION(erase_character_backwards));
     register_key_input_callback(ctrl('K'), EDITOR_INTERNAL_FUNCTION(erase_to_end));
     register_key_input_callback(ctrl('L'), EDITOR_INTERNAL_FUNCTION(clear_screen));
@@ -1247,18 +1249,21 @@ void Editor::refresh_display()
     auto print_character_at = [this](size_t i) {
         StringBuilder builder;
         auto c = m_buffer[i];
-        bool should_print_caret = isascii(c) && iscntrl(c) && c != '\n';
+        bool should_print_masked = isascii(c) && iscntrl(c) && c != '\n';
+        bool should_print_caret = c < 64 && should_print_masked;
         if (should_print_caret)
             builder.appendff("^{:c}", c + 64);
+        else if (should_print_masked)
+            builder.appendff("\\x{:0>2x}", c);
         else
             builder.append(Utf32View { &c, 1 });
 
-        if (should_print_caret)
+        if (should_print_masked)
             fputs("\033[7m", stderr);
 
         fputs(builder.to_string().characters(), stderr);
 
-        if (should_print_caret)
+        if (should_print_masked)
             fputs("\033[27m", stderr);
     };
 
@@ -1634,7 +1639,7 @@ Editor::VTState Editor::actual_rendered_string_length_step(StringMetrics& metric
             return state;
         }
         if (isascii(c) && iscntrl(c) && c != '\n')
-            current_line.masked_chars.append({ index, 1, 2 });
+            current_line.masked_chars.append({ index, 1, c < 64 ? 2u : 4u }); // if the character cannot be represented as ^c, represent it as \xbb.
         // FIXME: This will not support anything sophisticated
         ++current_line.length;
         ++metrics.total_length;

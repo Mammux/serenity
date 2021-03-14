@@ -49,6 +49,8 @@ void RegExpPrototype::initialize(GlobalObject& global_object)
     define_native_function(vm.names.test, test, 1, attr);
     define_native_function(vm.names.exec, exec, 1, attr);
 
+    define_native_function(vm.well_known_symbol_match(), symbol_match, 1, attr);
+
     u8 readable_attr = Attribute::Configurable;
     define_native_property(vm.names.flags, flags, {}, readable_attr);
     define_native_property(vm.names.source, source, {}, readable_attr);
@@ -252,6 +254,31 @@ JS_DEFINE_NATIVE_FUNCTION(RegExpPrototype::to_string)
         return {};
 
     return js_string(vm, String::formatted("/{}/{}", pattern, flags));
+}
+
+JS_DEFINE_NATIVE_FUNCTION(RegExpPrototype::symbol_match)
+{
+    // https://tc39.es/ecma262/#sec-regexp.prototype-@@match
+    auto* rx = this_object_from(vm, global_object);
+    if (!rx)
+        return {};
+    auto s = vm.argument(0).to_string(global_object);
+    if (vm.exception())
+        return {};
+    auto global_value = rx->get(vm.names.global).value_or(js_undefined());
+    if (vm.exception())
+        return {};
+    bool global = global_value.to_boolean();
+    // FIXME: Implement and use RegExpExec, this does something different - https://tc39.es/ecma262/#sec-regexpexec
+    auto* exec = get_method(global_object, rx, vm.names.exec);
+    if (!exec)
+        return js_undefined();
+    // FIXME end
+    if (!global)
+        return vm.call(*exec, rx, js_string(vm, s));
+
+    // FIXME: This should exec the RegExp repeatedly while updating "lastIndex"
+    return vm.call(*exec, rx, js_string(vm, s));
 }
 
 }

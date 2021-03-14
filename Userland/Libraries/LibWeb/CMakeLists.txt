@@ -11,6 +11,7 @@ set(SOURCES
     Bindings/Wrappable.cpp
     CSS/CSSImportRule.cpp
     CSS/CSSRule.cpp
+    CSS/CSSStyleDeclaration.cpp
     CSS/CSSStyleRule.cpp
     CSS/CSSStyleSheet.cpp
     CSS/DefaultStyleSheetSource.cpp
@@ -24,7 +25,6 @@ set(SOURCES
     CSS/QuirksModeStyleSheetSource.cpp
     CSS/Selector.cpp
     CSS/SelectorEngine.cpp
-    CSS/StyleDeclaration.cpp
     CSS/StyleInvalidator.cpp
     CSS/StyleProperties.cpp
     CSS/StyleResolver.cpp
@@ -283,6 +283,7 @@ function(libweb_js_wrapper class)
     add_custom_target(generate_${basename}Prototype.cpp DEPENDS Bindings/${class}Prototype.cpp)
 endfunction()
 
+libweb_js_wrapper(CSS/CSSStyleDeclaration)
 libweb_js_wrapper(CSS/CSSStyleSheet)
 libweb_js_wrapper(CSS/StyleSheet)
 libweb_js_wrapper(CSS/StyleSheetList)

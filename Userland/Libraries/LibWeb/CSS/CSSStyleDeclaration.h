@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Matthew Olsson <matthewcolsson@gmail.com>
+ * Copyright (c) 2018-2021, Andreas Kling <kling@serenityos.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,47 @@
 
 #pragma once
 
-#include <LibJS/AST.h>
-#include <LibJS/Runtime/Object.h>
-#include <LibRegex/Regex.h>
+#include <AK/String.h>
+#include <AK/Vector.h>
+#include <LibWeb/Bindings/Wrappable.h>
+#include <LibWeb/CSS/StyleValue.h>
 
-struct Flags {
-    regex::RegexOptions<ECMAScriptFlags> effective_flags;
-    regex::RegexOptions<ECMAScriptFlags> declared_flags;
+namespace Web::CSS {
+
+struct StyleProperty {
+    CSS::PropertyID property_id;
+    NonnullRefPtr<StyleValue> value;
+    bool important { false };
 };
 
-namespace JS {
-
-RegExpObject* regexp_create(GlobalObject&, Value pattern, Value flags);
-
-class RegExpObject : public Object {
-    JS_OBJECT(RegExpObject, Object);
-
+class CSSStyleDeclaration
+    : public RefCounted<CSSStyleDeclaration>
+    , public Bindings::Wrappable {
 public:
-    static RegExpObject* create(GlobalObject&, String pattern, String flags);
+    using WrapperType = Bindings::CSSStyleDeclarationWrapper;
 
-    RegExpObject(String pattern, String flags, Object& prototype);
-    virtual void initialize(GlobalObject&) override;
-    virtual ~RegExpObject() override;
+    static NonnullRefPtr<CSSStyleDeclaration> create(Vector<StyleProperty>&& properties)
+    {
+        return adopt(*new CSSStyleDeclaration(move(properties)));
+    }
 
-    const String& pattern() const { return m_pattern; }
-    const String& flags() const { return m_flags; }
-    const regex::RegexOptions<ECMAScriptFlags>& declared_options() { return m_active_flags.declared_flags; }
-    const Regex<ECMA262>& regex() { return m_regex; }
-    const Regex<ECMA262>& regex() const { return m_regex; }
+    ~CSSStyleDeclaration();
+
+    const Vector<StyleProperty>& properties() const { return m_properties; }
+
+    size_t length() const { return m_properties.size(); }
+    String item(size_t index) const;
 
 private:
-    JS_DECLARE_NATIVE_GETTER(last_index);
-    JS_DECLARE_NATIVE_SETTER(set_last_index);
+    explicit CSSStyleDeclaration(Vector<StyleProperty>&&);
 
-    String m_pattern;
-    String m_flags;
-    Flags m_active_flags;
-    Regex<ECMA262> m_regex;
+    Vector<StyleProperty> m_properties;
 };
+
+}
+
+namespace Web::Bindings {
+
+CSSStyleDeclarationWrapper* wrap(JS::GlobalObject&, CSS::CSSStyleDeclaration&);
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, Andreas Kling <kling@serenityos.org>
+ * Copyright (c) 2021, the SerenityOS developers.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,35 +24,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
 #include <AK/String.h>
-#include <AK/Vector.h>
-#include <LibWeb/CSS/StyleValue.h>
+#include <LibTextCodec/Decoder.h>
+#include <stddef.h>
+#include <stdint.h>
 
-namespace Web::CSS {
-
-struct StyleProperty {
-    CSS::PropertyID property_id;
-    NonnullRefPtr<StyleValue> value;
-    bool important { false };
-};
-
-class StyleDeclaration : public RefCounted<StyleDeclaration> {
-public:
-    static NonnullRefPtr<StyleDeclaration> create(Vector<StyleProperty>&& properties)
-    {
-        return adopt(*new StyleDeclaration(move(properties)));
-    }
-
-    ~StyleDeclaration();
-
-    const Vector<StyleProperty>& properties() const { return m_properties; }
-
-private:
-    explicit StyleDeclaration(Vector<StyleProperty>&&);
-
-    Vector<StyleProperty> m_properties;
-};
-
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    auto* decoder = TextCodec::decoder_for("utf-16be");
+    VERIFY(decoder);
+    decoder->to_utf8({ data, size });
+    return 0;
 }
